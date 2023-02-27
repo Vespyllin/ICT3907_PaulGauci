@@ -14,14 +14,11 @@ start(N) ->
 loop(Tot) ->
     receive
         {Clt, {add, A, B}} ->
-            % Handle addition request from client.
             Clt ! {ok, A + B},
             loop(Tot + 1);
         {Clt, {mul, A, B}} ->
-            % Handle multiplication request from client.
             Clt ! {ok, A * B},
             loop(Tot + 1);
         {Clt, stp} ->
-            % Handle stop request. Server does not loop again.
             Clt ! {bye, Tot}
     end.

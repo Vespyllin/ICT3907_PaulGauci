@@ -1,0 +1,35 @@
+{{:__aliases__, [line: 1], [:Demo, :TMP]},
+ {:do,
+  {:def, [line: 3],
+   [
+     {:smp, [line: 3], []},
+     [
+       do: {{:., [line: 4], [{:__aliases__, [line: 4], [:IO]}, :puts]},
+        [line: 4], ["A"]}
+     ]
+   ]}}}
+
+
+
+
+{{:__aliases__, [line: 1], [:Demo, :TMP]},
+ {:do,
+  {:__block__, [],
+   [
+     {:@, [line: 2],
+      [
+        {:spec, [line: 2],
+         [
+           {:"::", [line: 2],
+            [{:smp, [line: 2], []}, {:no_return, [line: 2], []}]}
+         ]}
+      ]},
+     {:def, [line: 3],
+      [
+        {:smp, [line: 3], []},
+        [
+          do: {{:., [line: 4], [{:__aliases__, [line: 4], [:IO]}, :puts]},
+           [line: 4], ["A"]}
+        ]
+      ]}
+   ]}}}
