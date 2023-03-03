@@ -1,35 +1,45 @@
-{{:__aliases__, [line: 1], [:Demo, :TMP]},
- {:do,
-  {:def, [line: 3],
+{:defmodule, [line: 1],
+ [
+   {:__aliases__, [line: 1], [:Demo, :CalcServer]},
    [
-     {:smp, [line: 3], []},
-     [
-       do: {{:., [line: 4], [{:__aliases__, [line: 4], [:IO]}, :puts]},
-        [line: 4], ["A"]}
-     ]
-   ]}}}
-
-
-
-
-{{:__aliases__, [line: 1], [:Demo, :TMP]},
- {:do,
-  {:__block__, [],
-   [
-     {:@, [line: 2],
+     do: {:__block__, [],
       [
-        {:spec, [line: 2],
+
+
+        {:def, [line: 3],
          [
-           {:"::", [line: 2],
-            [{:smp, [line: 2], []}, {:no_return, [line: 2], []}]}
+           {:start, [line: 3], [{:n, [line: 3], nil}]},
+           [
+             do: {:__block__, [],
+              [
+                {:spawn, [line: 4],
+                 [{:__MODULE__, [line: 4], nil}, :loop, [{:n, [line: 4], nil}]]},
+                {:=, [line: 5], [{:_thing, [line: 5], nil}, 2]}
+              ]}
+           ]
+         ]},
+
+
+        {:def, [line: 8],
+         [
+           {:start2, [line: 8], [{:n, [line: 8], nil}]},
+           [
+             do: {:__block__, [],
+              [
+                {:=, [line: 9],
+                 [{:mod, [line: 9], nil}, {:__MODULE__, [line: 9], nil}]},
+                {:=, [line: 10], [{:fun, [line: 10], nil}, :loop]},
+                {:=, [line: 11],
+                 [{:args, [line: 11], nil}, [{:n, [line: 11], nil}]]},
+                {:spawn, [line: 13],
+                 [
+                   {:mod, [line: 13], nil},
+                   {:fun, [line: 13], nil},
+                   {:args, [line: 13], nil}
+                 ]}
+              ]}
+           ]
          ]}
-      ]},
-     {:def, [line: 3],
-      [
-        {:smp, [line: 3], []},
-        [
-          do: {{:., [line: 4], [{:__aliases__, [line: 4], [:IO]}, :puts]},
-           [line: 4], ["A"]}
-        ]
       ]}
-   ]}}}
+   ]
+ ]}

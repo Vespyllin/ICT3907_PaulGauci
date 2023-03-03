@@ -26,31 +26,79 @@ defmodule Xeval_Helper do
   end
 
   def get_fn_data(def_block) do
-    {:def, _meta, [fn_name, [fn_content_block]]} = def_block
+    IO.inspect("fn data")
 
-    case fn_content_block do
-      {:do, {:__block__, _meta, fn_content}} ->
-        IO.inspect("1< lines")
-        {fn_name, fn_content}
+    case def_block do
+      {:def, _meta, [fn_name, [fn_content_block]]} ->
+        case fn_content_block do
+          {:do, {:__block__, _meta, fn_content}} ->
+            IO.inspect("1< lines")
+            {fn_name, fn_content}
 
-      {:do, fn_content} ->
-        IO.inspect("1 line")
-        {fn_name, fn_content}
+          {:do, fn_content} ->
+            IO.inspect("1 line")
+            {fn_name, fn_content}
+
+          _ ->
+            IO.inspect("Could not parse fn def")
+            nil
+        end
 
       _ ->
-        IO.inspect("Could not parse fn def")
         nil
     end
   end
 
+  def check_fns(list_of_fn_defs) do
+    # TODO: For each stmt, check if spawn, if so replace with results of wrap_spawn
+    case list_of_fn_defs do
+      {:def, _meta, [fn_name, [fn_content_block]]} ->
+        case fn_content_block do
+          {:do, {:__block__, _meta, fn_content}} ->
+            IO.inspect("1< lines")
+            inject_wrapper(fn_content)
+
+          # {fn_name, fn_content}
+
+          {:do, fn_content} ->
+            IO.inspect("1 line")
+            {fn_name, fn_content}
+
+          _ ->
+            IO.inspect("Could not parse fn def")
+            nil
+        end
+
+      _ ->
+        nil
+    end
+  end
+
+  def inject_wrapper([head | tail]) do
+    case head do
+      {:spawn, _, [arg1, arg2, arg3]} ->
+        IO.inspect([arg1, arg2, arg3])
+        IO.inspect("found spawn")
+        inject_wrapper(tail)
+
+      _ ->
+        inject_wrapper(tail)
+    end
+  end
+
+  def inject_wrapper([]) do
+    IO.inspect("done")
+  end
+
   def traverse_ast(quoted_module) do
+    # IO.inspect(quoted_module)
+
     case quoted_module do
       {:defmodule, _meta, _contents} ->
         {_mod_alias, mod_content} = get_module_data(quoted_module)
 
         test = parse_module_contents(mod_content)
-        test = get_fn_data(test)
-        IO.inspect(test)
+        check_fns(Enum.at(test, 0))
 
         :module
 
