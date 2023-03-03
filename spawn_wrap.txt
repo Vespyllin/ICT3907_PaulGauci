@@ -1,0 +1,68 @@
+{:__block__, [],
+ [
+   {:=, [], [{:mod, [], Elixir}, :a]},
+   {:=, [], [{:fun, [], Elixir}, :b]},
+   {:=, [], [{:args, [], Elixir}, :c]},
+   {:=, [],
+    [
+      {:pid, [], Elixir},
+      {:case, [],
+       [
+         {{:., [], [:prop_add_rec, :mfa_spec]}, [],
+          [
+            {:{}, [],
+             [{:mod, [], Elixir}, {:fun, [], Elixir}, {:args, [], Elixir}]}
+          ]},
+         [
+           do: [
+             {:->, [],
+              [
+                [:undefined],
+                {:spawn, [context: Elixir, import: Kernel],
+                 [{:mod, [], Elixir}, {:fun, [], Elixir}, {:args, [], Elixir}]}
+              ]},
+             {:->, [],
+              [
+                [{{:ok, [], Elixir}, {:mon, [], Elixir}}],
+                {:__block__, [],
+                 [
+                   {:=, [],
+                    [
+                      {:parent_pid, [], Elixir},
+                      {:self, [context: Elixir, import: Kernel], []}
+                    ]},
+                   {:spawn, [context: Elixir, import: Kernel],
+                    [
+                      {:fn, [],
+                       [
+                         {:->, [],
+                          [
+                            [],
+                            {:__block__, [],
+                             [
+                               {{:., [], ...}, [], [...]},
+                               {{:., ...}, [], ...},
+                               {:apply, ...}
+                             ]}
+                          ]}
+                       ]}
+                    ]}
+                 ]}
+              ]}
+           ]
+         ]
+       ]}
+    ]},
+   {{:., [], [:analyzer, :dispatch]}, [],
+    [
+      {:{}, [],
+       [
+         :fork,
+         {:self, [context: Elixir, import: Kernel], []},
+         {:pid, [], Elixir},
+         {:{}, [],
+          [{:mod, [], Elixir}, {:fun, [], Elixir}, {:args, [], Elixir}]}
+       ]}
+    ]},
+   {:pid, [], Elixir}
+ ]}

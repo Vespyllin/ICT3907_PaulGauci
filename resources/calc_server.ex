@@ -1,16 +1,16 @@
 defmodule Demo.CalcServer do
   # @spec start(n :: integer()) :: pid()
   def start(n) do
+    # thing = [n]
     spawn(__MODULE__, :loop, [n])
-    _thing = 2
   end
 
   def start2(n) do
-    mod = __MODULE__
+    # mod = __MODULE__
     fun = :loop
     args = [n]
 
-    spawn(mod, fun, args)
+    # spawn(mod, fun, args)
   end
 
   # @spec loop(tot :: integer()) :: no_return()
