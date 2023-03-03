@@ -48,10 +48,12 @@ defmodule Clean do
   end
 
   defp unwrap_fn_decl([fn_name, [{:do, fn_stmts}]]) do
-    inject_res = inject_monitor(fn_stmts)
+    inject_res = inject_monitor([fn_stmts])
+    IO.inspect(length(inject_res))
 
-    if length(inject_res) == 0 do
-      [fn_name, [{:do, inject_res}]]
+    if length(inject_res) == 1 do
+      [tmp] = inject_res
+      [fn_name, [{:do, tmp}]]
     else
       [fn_name, [{:do, {:__block__, [], inject_res}}]]
     end
@@ -59,7 +61,7 @@ defmodule Clean do
 
   # Wrapper to destructure monitor injection over functions with and without block statements
   defp inject_monitor([head | tail]) do
-    wrap_stmt(head) ++ inject_monitor(tail)
+    [wrap_stmt(head) | inject_monitor(tail)]
   end
 
   defp inject_monitor([]) do
@@ -71,16 +73,35 @@ defmodule Clean do
     wrap_stmt(standalone)
   end
 
-  defp wrap_stmt({:spawn, meta, [arg1, arg2, arg3]}) do
-    mod = {:=, [], [{:_mod, [], nil}, arg1]}
-    fun = {:=, [], [{:_fun, [], nil}, arg2]}
-    args = {:=, [], [{:_args, [], nil}, arg3]}
+  defp wrap_stmt({:spawn, _meta, [arg1, arg2, arg3]}) do
+    quote do
+      (fn ->
+         __mod = unquote(arg1)
+         __fun = unquote(arg2)
+         __args = unquote(arg3)
 
-    # {:wrap, [mod, {:spawn, meta, [arg1, arg2, arg3]}]}
-    [mod, fun, args, {:spawn, meta, [arg1, arg2, arg3]}]
+         __pid =
+           case :prop_add_rec.mfa_spec({__mod, __fun, __args}) do
+             :undefined ->
+               spawn(__mod, __fun, __args)
+
+             {:ok, mon} ->
+               __parent_pid = self()
+
+               spawn(fn ->
+                 Process.put('$monitor', mon)
+                 :analyzer.dispatch({:init, self(), __parent_pid, {__mod, __fun, __args}})
+                 apply(__mod, __fun, __args)
+               end)
+           end
+
+         :analyzer.dispatch({:fork, self(), __pid, {__mod, __fun, __args}})
+         __pid
+       end).()
+    end
   end
 
   defp wrap_stmt(pass) do
-    [pass]
+    pass
   end
 end

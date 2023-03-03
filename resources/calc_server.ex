@@ -1,8 +1,8 @@
 defmodule Demo.CalcServer do
   # @spec start(n :: integer()) :: pid()
   def start(n) do
-    # thing = [n]
     spawn(__MODULE__, :loop, [n])
+    # thing = 21
   end
 
   def start2(n) do
