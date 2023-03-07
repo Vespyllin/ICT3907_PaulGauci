@@ -1,23 +1,13 @@
+import Kernel
+
 defmodule Demo.CalcServer do
-  # @spec start(n :: integer()) :: pid()
-  # def start(n) do
-  #   # spawn(__MODULE__, :loop1, [n])
-  #   thing = 21
-  #   thing = 22
-  # end
+  @spec start(n :: integer()) :: pid()
+  def start(n) do
+    spawn(__MODULE__, :loop, [n])
+  end
 
-  # @spec start2(n :: integer()) :: pid()
-
-  # def start2(n) do
-  # mod = __MODULE__
-  # fun = :loop
-  # args = [n]
-
-  # spawn(mod, fun, args)
-  # end
-
-  # @spec loop(tot :: integer()) :: no_return()
-  def loop(tot) do
+  @spec loop(tot :: integer()) :: no_return()
+  defp loop(tot) do
     receive do
       {clt, {:add, a, b}} ->
         send(clt, {:ok, a + b})

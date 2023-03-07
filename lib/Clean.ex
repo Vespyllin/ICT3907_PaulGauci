@@ -3,47 +3,66 @@ defmodule Clean do
   def weave(path) do
     {:ok, ast} = Code.string_to_quoted(File.read!(path))
 
-    unwrap_mod_decl(ast)
+    unwrap_top_level(ast)
   end
 
-  # TODO: IMPORTS
-  # Unwrap module declaration
-  defp unwrap_mod_decl({:defmodule, meta, [alias_data, [mod_content]]}) do
-    {:defmodule, meta, [alias_data, [unwrap_mod(mod_content)]]}
+  # Unwrap imports and module definitions
+  defp unwrap_top_level({:__block__, meta, file_contents}) do
+    {:__block__, meta, unwrap_mod_def(file_contents)}
   end
 
-  defp unwrap_mod_decl(pass) do
-    IO.inspect("NO MATCH FOR: unwrap_mod_decl(_) (possibly caused by an unhandled import stmt)")
+  defp unwrap_top_level(pass) do
+    unwrap_mod_def([pass])
+  end
+
+  # Unwrap module declarations
+  defp unwrap_mod_def([{:defmodule, meta, [alias_data, [mod_content]]} | tail]) do
+    [{:defmodule, meta, [alias_data, [unwrap_mod_block(mod_content)]]} | unwrap_mod_def(tail)]
+  end
+
+  defp unwrap_mod_def([head | tail]) do
+    [head | unwrap_mod_def(tail)]
+  end
+
+  defp unwrap_mod_def(pass) do
     pass
   end
 
   # Unwrap module content block
-  defp unwrap_mod({:do, {:__block__, meta, mod_stmts}}) do
-    {:do, {:__block__, meta, unwrap_mod_comp(mod_stmts)}}
+  defp unwrap_mod_block({:do, {:__block__, meta, mod_stmts}}) do
+    {:do, {:__block__, meta, unwrap_mod_members(mod_stmts)}}
   end
 
-  defp unwrap_mod({:do, mod_stmts}) do
-    {:do, unwrap_mod_comp(mod_stmts)}
+  defp unwrap_mod_block({:do, mod_stmts}) do
+    {:do, unwrap_mod_members(mod_stmts)}
   end
 
-  defp unwrap_mod(pass) do
+  defp unwrap_mod_block(pass) do
     pass
   end
 
   # Unwrap module components
-  defp unwrap_mod_comp({:def, meta, fn_decl}) do
+  defp unwrap_mod_members({:def, meta, fn_decl}) do
     {:def, meta, unwrap_fn_decl(fn_decl)}
   end
 
-  defp unwrap_mod_comp([{:def, meta, fn_decl} | tail]) do
-    [{:def, meta, unwrap_fn_decl(fn_decl)} | unwrap_mod_comp(tail)]
+  defp unwrap_mod_members({:defp, meta, fn_decl}) do
+    {:defp, meta, unwrap_fn_decl(fn_decl)}
   end
 
-  defp unwrap_mod_comp([head | tail]) do
-    [head | unwrap_mod_comp(tail)]
+  defp unwrap_mod_members([{:def, meta, fn_decl} | tail]) do
+    [{:def, meta, unwrap_fn_decl(fn_decl)} | unwrap_mod_members(tail)]
   end
 
-  defp unwrap_mod_comp(pass) do
+  defp unwrap_mod_members([{:defp, meta, fn_decl} | tail]) do
+    [{:defp, meta, unwrap_fn_decl(fn_decl)} | unwrap_mod_members(tail)]
+  end
+
+  defp unwrap_mod_members([head | tail]) do
+    [head | unwrap_mod_members(tail)]
+  end
+
+  defp unwrap_mod_members(pass) do
     pass
   end
 
@@ -95,7 +114,7 @@ defmodule Clean do
     end
   end
 
-  # Wrap receive clause childen in a monitor
+  # Wrap receive clause members in a monitor
   defp wrap_stmt({:receive, meta, [[{:do, cases}]]}) do
     {:receive, meta, [[{:do, Enum.map(cases, &wrap_stmt/1)}]]}
   end
