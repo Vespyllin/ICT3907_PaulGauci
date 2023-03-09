@@ -1,5 +1,3 @@
-import Kernel
-
 defmodule Demo.CalcServer do
   @spec start(n :: integer()) :: pid()
   def start(n) do
@@ -7,9 +5,10 @@ defmodule Demo.CalcServer do
   end
 
   @spec loop(tot :: integer()) :: no_return()
-  defp loop(tot) do
+  def loop(tot) do
     receive do
       {clt, {:add, a, b}} ->
+        # BUG
         send(clt, {:ok, a + b})
         loop(tot + 1)
 

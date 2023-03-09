@@ -1,5 +1,6 @@
-defmodule Clean do
+defmodule Elixir.Weave do
   # Master FN
+  # TODO: add options
   def weave(path) do
     {:ok, ast} = Code.string_to_quoted(File.read!(path))
 
@@ -12,7 +13,8 @@ defmodule Clean do
   end
 
   defp unwrap_top_level(pass) do
-    unwrap_mod_def([pass])
+    [res] = unwrap_mod_def([pass])
+    res
   end
 
   # Unwrap module declarations
@@ -89,27 +91,27 @@ defmodule Clean do
   defp wrap_stmt({:spawn, _meta, [mod, fun, args]}) do
     quote do
       (fn ->
-         __mod = unquote(mod)
-         __fun = unquote(fun)
-         __args = unquote(args)
+         mod = unquote(mod)
+         fun = unquote(fun)
+         args = unquote(args)
 
-         __pid =
-           case :prop_add_rec.mfa_spec({__mod, __fun, __args}) do
+         pid =
+           case :prop_add_rec.mfa_spec({mod, fun, args}) do
              :undefined ->
-               spawn(__mod, __fun, __args)
+               spawn(mod, fun, args)
 
              {:ok, mon} ->
-               __parent_pid = self()
+               parent_pid = self()
 
                spawn(fn ->
-                 Process.put('$monitor', mon)
-                 :analyzer.dispatch({:init, self(), __parent_pid, {__mod, __fun, __args}})
-                 apply(__mod, __fun, __args)
+                 Process.put(:"$monitor", mon)
+                 :analyzer.dispatch({:init, self(), parent_pid, {mod, fun, args}})
+                 apply(mod, fun, args)
                end)
            end
 
-         :analyzer.dispatch({:fork, self(), __pid, {__mod, __fun, __args}})
-         __pid
+         :analyzer.dispatch({:fork, self(), pid, {mod, fun, args}})
+         pid
        end).()
     end
   end
@@ -124,10 +126,10 @@ defmodule Clean do
     match_injection =
       quote do
         (fn ->
-           __match = unquote(match_case)
+           match = unquote(match_case)
 
-           if :analyzer.filter(__match) do
-             :analyzer.dispatch({:recv, self(), __match})
+           if :analyzer.filter(match) do
+             :analyzer.dispatch({:recv, self(), match})
            end
          end).()
       end
@@ -146,11 +148,13 @@ defmodule Clean do
   defp wrap_stmt({:send, _meta, [dest, msg]}) do
     quote do
       (fn ->
-         __pid = unquote(dest)
-         __msg = unquote(msg)
+         pid = unquote(dest)
+         msg = unquote(msg)
 
-         if :analyzer.filter(__msg) do
-           :analyzer.dispatch({:send, self(), __pid, _msg})
+         send(pid, msg)
+
+         if :analyzer.filter(msg) do
+           :analyzer.dispatch({:send, self(), pid, msg})
          end
        end).()
     end
