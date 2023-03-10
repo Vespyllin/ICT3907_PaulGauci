@@ -197,15 +197,14 @@ do_monitor(Event, VerdictFun) when is_function(VerdictFun, 1) ->
     % case get("$monitor") of
     case get(?MONITOR) of
         undefined ->
-            io:format("Analyzer undefined; discarding trace event ~w.\n", [Event]),
-            % ?TRACE("Analyzer undefined; discarding trace event ~w.", [Event]),
+            % io:format("Analyzer undefined; discarding trace event ~w.\n", [Event]),
+            ?TRACE("Analyzer undefined; discarding trace event ~w.", [Event]),
             undefined;
         Monitor ->
             % Analyze event. At this point, monitor might have reached a verdict.
             % Check whether verdict is reached to enable immediate detection, should
             % this be the case.
-            % put(?MONITOR, Monitor0 = analyze(Monitor, Event)),
-            put("$monitor", Monitor0 = analyze(Monitor, Event)),
+            put(?MONITOR, Monitor0 = analyze(Monitor, Event)),
             case is_verdict(Monitor0) of
                 true ->
                     VerdictFun(Monitor0);
