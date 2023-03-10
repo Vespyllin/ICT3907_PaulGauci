@@ -17,7 +17,6 @@ defmodule Demo.CalcClient do
 
     receive do
       resp ->
-        IO.inspect(resp)
         resp
     end
   end

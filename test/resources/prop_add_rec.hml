@@ -1,7 +1,7 @@
 with
-  'Elixir.Demo.CalcServer':loop(_)
+  'Elixir.Dummy.Server':loop(_)
 monitor
-  and([_ <- _, 'Elixir.Demo.CalcServer':loop(_)]
+  and([_ <- _, 'Elixir.Dummy.Server':loop(_)]
     max(X.
       and([_ ? {_, {add, A, B}}]
         and(

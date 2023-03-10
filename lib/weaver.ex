@@ -1,16 +1,35 @@
 defmodule Elixir.Weaver do
-  def weave(source_file, dest_path, source_code \\ false) do
-    #! CHECK FOR ERRORS
+  def weave(source_file, dest_path \\ nil, source_code \\ false) do
     try do
+      unless !dest_path || File.dir?(dest_path),
+        do: raise("2nd argument must be an existing directory.")
+
+      file_name = Path.basename(source_file, ".ex")
       read_res = File.read!(source_file)
       monitored_ast = unwrap_ast(Code.string_to_quoted!(read_res))
 
-      if(source_code) do
-        File.write!(dest_path, Macro.to_string(monitored_ast))
-        IO.puts("Written to #{dest_path}")
-      else
-        Code.compile_quoted(monitored_ast)
-        IO.puts("Compiled monitored file")
+      cond do
+        dest_path && source_code ->
+          dest_file_path = dest_path <> "/" <> file_name <> "_mon.ex"
+          File.write!(dest_file_path, Macro.to_string(monitored_ast))
+
+          IO.puts("Written to #{dest_file_path}")
+
+        dest_path && !source_code ->
+          [{mod_name, binary}] = Code.compile_quoted(monitored_ast)
+
+          dest_file_path = "#{dest_path}/#{mod_name}.beam"
+
+          IO.inspect(dest_file_path)
+          File.write!(dest_file_path, binary)
+
+          IO.puts(
+            "Compiled monitored file into the environment as #{mod_name} and wrote it to #{dest_file_path}"
+          )
+
+        true ->
+          [{mod_name, _binary}] = Code.compile_quoted(monitored_ast)
+          IO.puts("Compiled monitored file into the environment as #{mod_name}")
       end
     rescue
       e in File.Error ->
@@ -24,6 +43,9 @@ defmodule Elixir.Weaver do
 
       e in SyntaxError ->
         exit("Source file contains invalid syntax.\n#{e.description}")
+
+      reason ->
+        exit(reason)
     end
   end
 
