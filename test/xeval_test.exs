@@ -1,6 +1,6 @@
 defmodule XevalTest do
   use ExUnit.Case
-  doctest Xeval
+  import ExUnit.CaptureIO
 
   test "greets the world" do
     assert Xeval.hello() == :world

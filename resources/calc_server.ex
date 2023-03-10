@@ -8,7 +8,6 @@ defmodule Demo.CalcServer do
   def loop(tot) do
     receive do
       {clt, {:add, a, b}} ->
-        # BUG
         send(clt, {:ok, a + b})
         loop(tot + 1)
 

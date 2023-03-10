@@ -1,18 +1,38 @@
-defmodule Elixir.Weave do
-  # Master FN
-  # TODO: add options
-  def weave(path) do
-    {:ok, ast} = Code.string_to_quoted(File.read!(path))
+defmodule Elixir.Weaver do
+  def weave(source_file, dest_path, source_code \\ false) do
+    #! CHECK FOR ERRORS
+    try do
+      read_res = File.read!(source_file)
+      monitored_ast = unwrap_ast(Code.string_to_quoted!(read_res))
 
-    unwrap_top_level(ast)
+      if(source_code) do
+        File.write!(dest_path, Macro.to_string(monitored_ast))
+        IO.puts("Written to #{dest_path}")
+      else
+        Code.compile_quoted(monitored_ast)
+        IO.puts("Compiled monitored file")
+      end
+    rescue
+      e in File.Error ->
+        case e.reason do
+          :enoent ->
+            exit("Could not read from #{source_file}")
+
+          _ ->
+            exit("File error #{e}")
+        end
+
+      e in SyntaxError ->
+        exit("Source file contains invalid syntax.\n#{e.description}")
+    end
   end
 
   # Unwrap imports and module definitions
-  defp unwrap_top_level({:__block__, meta, file_contents}) do
+  defp unwrap_ast({:__block__, meta, file_contents}) do
     {:__block__, meta, unwrap_mod_def(file_contents)}
   end
 
-  defp unwrap_top_level(pass) do
+  defp unwrap_ast(pass) do
     [res] = unwrap_mod_def([pass])
     res
   end
