@@ -5,6 +5,10 @@ defmodule Dummy.Server do
 
   def loop(tot) do
     receive do
+      {clt, {:add, 0, b}} ->
+        send(clt, {:ok, 1 + b})
+        loop(tot + 1)
+
       {clt, {:add, a, b}} ->
         send(clt, {:ok, a + b})
         loop(tot + 1)

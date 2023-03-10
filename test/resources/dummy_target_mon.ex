@@ -21,6 +21,22 @@ defmodule(Dummy.Server) do
   end
   def(loop(tot)) do
     receive do
+      {clt, {:add, 0, b}} ->
+        (fn ->
+          match = {clt, {:add, 0, b}}
+          if(:analyzer.filter(match)) do
+            :analyzer.dispatch({:recv, self(), match})
+          end
+        end).()
+        (fn ->
+          pid = clt
+          msg = {:ok, 1 + b}
+          send(pid, msg)
+          if(:analyzer.filter(msg)) do
+            :analyzer.dispatch({:send, self(), pid, msg})
+          end
+        end).()
+        loop(tot + 1)
       {clt, {:add, a, b}} ->
         (fn ->
           match = {clt, {:add, a, b}}

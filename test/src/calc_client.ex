@@ -1,17 +1,4 @@
-defmodule Demo.CalcClient do
-  @spec add(a :: number(), b :: number()) :: number()
-  def add(a, b) do
-    {:add, res} = rpc(Demo.CalcServer, {:add, a, b})
-    res
-  end
-
-  @spec mul(a :: number(), b :: number()) :: number()
-  def mul(a, b) do
-    {:mul, res} = rpc(Demo.CalcServer, {:mul, a, b})
-    res
-  end
-
-  @spec rpc(to :: pid() | atom(), req :: any()) :: any()
+defmodule Dummy.Client do
   def rpc(to, req) do
     send(to, {self(), req})
 
@@ -19,5 +6,10 @@ defmodule Demo.CalcClient do
       resp ->
         resp
     end
+  end
+
+  def gen_client(server_pid) do
+    add = fn a, b -> rpc(server_pid, {:add, a, b}) end
+    %{add: add}
   end
 end
