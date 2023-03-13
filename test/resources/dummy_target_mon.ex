@@ -2,7 +2,7 @@ defmodule(Dummy.Server) do
   def(start(n)) do
     (fn ->
       mod = __MODULE__
-      fun = :loop
+      fun = :dummy_spawn
       args = [n]
       pid = case(:prop_add_rec.mfa_spec({mod, fun, args})) do
         :undefined ->
@@ -19,55 +19,14 @@ defmodule(Dummy.Server) do
       pid
     end).()
   end
-  def(loop(tot)) do
-    receive do
-      {clt, {:add, 0, b}} ->
-        (fn ->
-          match = {clt, {:add, 0, b}}
-          if(:analyzer.filter(match)) do
-            :analyzer.dispatch({:recv, self(), match})
-          end
-        end).()
-        (fn ->
-          pid = clt
-          msg = {:ok, 1 + b}
-          send(pid, msg)
-          if(:analyzer.filter(msg)) do
-            :analyzer.dispatch({:send, self(), pid, msg})
-          end
-        end).()
-        loop(tot + 1)
-      {clt, {:add, a, b}} ->
-        (fn ->
-          match = {clt, {:add, a, b}}
-          if(:analyzer.filter(match)) do
-            :analyzer.dispatch({:recv, self(), match})
-          end
-        end).()
-        (fn ->
-          pid = clt
-          msg = {:ok, a + b}
-          send(pid, msg)
-          if(:analyzer.filter(msg)) do
-            :analyzer.dispatch({:send, self(), pid, msg})
-          end
-        end).()
-        loop(tot + 1)
-      {clt, :stp} ->
-        (fn ->
-          match = {clt, :stp}
-          if(:analyzer.filter(match)) do
-            :analyzer.dispatch({:recv, self(), match})
-          end
-        end).()
-        (fn ->
-          pid = clt
-          msg = {:bye, tot}
-          send(pid, msg)
-          if(:analyzer.filter(msg)) do
-            :analyzer.dispatch({:send, self(), pid, msg})
-          end
-        end).()
-    end
+  def(dummy_spawn(n)) do
+    (fn ->
+      pid = self()
+      msg = {:ok, 1}
+      send(pid, msg)
+      if(:analyzer.filter(msg)) do
+        :analyzer.dispatch({:send, self(), pid, msg})
+      end
+    end).()
   end
 end
