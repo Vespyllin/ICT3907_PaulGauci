@@ -1,0 +1,4 @@
+with
+  'Elixir.Dummy.Server':dummy_spawn()
+monitor
+  and([_ <- _, 'Elixir.Dummy.Server':dummy_spawn()]ff).

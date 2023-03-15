@@ -1,0 +1,9 @@
+with
+  'Elixir.Dummy.Server':dummy_send(_)
+monitor
+  and(
+    [_ <- _, 'Elixir.Dummy.Server':dummy_send(_)] 
+      and(
+        [_:_ ! no]ff
+      )
+  ).

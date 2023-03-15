@@ -1,6 +1,18 @@
 defmodule Dummy.Server do
-  def start(n) do
-    spawn(__MODULE__, :dummy_spawn, [n])
+  def spawn_noarg() do
+    spawn(__MODULE__, :dummy_spawn, [])
+  end
+
+  def spawn_arg() do
+    spawn(__MODULE__, :dummy_spawn, [:arg])
+  end
+
+  def spawn_skip() do
+    spawn(__MODULE__, :skip, [:arg])
+  end
+
+  def spawn_send(arg) do
+    spawn(__MODULE__, :dummy_send, [arg])
   end
 
   # def loops(tot) do
@@ -18,8 +30,16 @@ defmodule Dummy.Server do
   #   end
   # end
 
-  def dummy_spawn(n) do
-    send(self(), {:ok, 1})
-    # spawn(fn -> IO.puts(:stdio, "\nDUMMY_SIDE_EFFECT #{n}") end)
+  def dummy_spawn() do
+  end
+
+  def dummy_spawn(_arg) do
+  end
+
+  def dummy_send(arg) do
+    send(self(), arg)
+  end
+
+  def skip(_arg) do
   end
 end
