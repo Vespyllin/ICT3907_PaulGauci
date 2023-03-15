@@ -1,31 +1,31 @@
 defmodule(Demo.CalcServer) do
   def(start(n)) do
-    (fn ->
-       mod = __MODULE__
-       fun = :loop
-       args = [n]
+    b =
+      (fn ->
+         mod = __MODULE__
+         fun = :loop
+         args = [n]
 
-       pid =
-         case(:prop_add_rec.mfa_spec({mod, fun, args})) do
-           :undefined ->
-             spawn(mod, fun, args)
+         pid =
+           case(:prop_add_rec.mfa_spec({mod, fun, args})) do
+             :undefined ->
+               spawn(mod, fun, args)
 
-           {:ok, mon} ->
-             parent_pid = self()
+             {:ok, mon} ->
+               parent_pid = self()
 
-             spawn(fn ->
-               Process.put(:"$monitor", mon)
-               :analyzer.dispatch({:init, self(), parent_pid, {mod, fun, args}})
-               apply(mod, fun, args)
-             end)
-         end
+               spawn(fn ->
+                 Process.put(:"$monitor", mon)
+                 :analyzer.dispatch({:init, self(), parent_pid, {mod, fun, args}})
+                 apply(mod, fun, args)
+               end)
+           end
 
-       :analyzer.dispatch({:fork, self(), pid, {mod, fun, args}})
-       pid
-     end).()
+         :analyzer.dispatch({:fork, self(), pid, {mod, fun, args}})
+         pid
+       end).()
   end
 
-  @spec loop(tot :: integer()) :: no_return()
   def(loop(tot)) do
     receive do
       {clt, {:add, a, b}} ->

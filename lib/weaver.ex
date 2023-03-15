@@ -6,6 +6,7 @@ defmodule Elixir.Weaver do
 
       file_name = Path.basename(source_file, ".ex")
       read_res = File.read!(source_file)
+
       monitored_ast = unwrap_ast(Code.string_to_quoted!(read_res))
 
       cond do
@@ -35,10 +36,10 @@ defmodule Elixir.Weaver do
       e in File.Error ->
         case e.reason do
           :enoent ->
-            exit("Could not read from #{source_file}")
+            exit("Could not read from \"#{source_file}\"")
 
           _ ->
-            exit("File error #{e}")
+            exit("File error:\n#{e}")
         end
 
       e in SyntaxError ->
@@ -160,7 +161,7 @@ defmodule Elixir.Weaver do
 
   # Wrap receive clause members in a monitor
   defp wrap_stmt({:receive, meta, [[{:do, cases}]]}) do
-    {:receive, meta, [[{:do, Enum.map(cases, &wrap_stmt/1)}]]}
+    {:receive, meta, [[{:do, inject_monitor(cases)}]]}
   end
 
   # Wrap receive statement in a monitor
@@ -200,6 +201,11 @@ defmodule Elixir.Weaver do
          end
        end).()
     end
+  end
+
+  # CAUTION: NAIVE IMPLEMENTATION, DOES NOT TAKE INTO ACCOUNT PATTERN MATCHING AND ASSIGNMENT OPERATOR CHAINING
+  defp wrap_stmt({:=, meta, block}) do
+    {:=, meta, inject_monitor(block)}
   end
 
   defp wrap_stmt(pass) do

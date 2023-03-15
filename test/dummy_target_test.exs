@@ -17,13 +17,13 @@ defmodule DummyTargetTest do
       end)
 
     if(String.contains?(String.downcase(res), "error")) do
-      raise("Bad monitor syntax in \"#{file_name}\"")
+      raise("Bad monitor syntax in \"#{file_name}\"\n#{res}")
     end
   end
 
   setup_all do
     Weaver.weave("#{@src_path}/dummy_target.ex")
-    # Weaver.weave("#{@src_path}/dummy_target.ex", "./test/resources", true)
+    Weaver.weave("#{@src_path}/dummy_target.ex", "./test/resources", true)
 
     {:ok, %{}}
   end
@@ -54,40 +54,81 @@ defmodule DummyTargetTest do
     assert String.contains?(String.downcase(io), "instrumenting monitor")
   end
 
+  @tag :todo
+  test "Monitor verdicts based on conditions regarding argument" do
+  end
+
   @tag :skip
   test "Not attaching a monitor to a function not specified in the monitor specification" do
     load_monitor("dummy_spawn_arg.hml")
 
     io =
       capture_io(fn ->
-        Dummy.Server.spawn_start_skip()
+        Dummy.Server.spawn_skip()
         :timer.sleep(100)
       end)
 
     assert String.contains?(String.downcase(io), "skipping")
   end
 
-  # @tag :skip
-  test "Monitoring send function: end verdict for unaccounted for pattern" do
+  @tag :skip
+  test "Monitoring send function: 'end' verdict for unaccounted for pattern" do
     load_monitor("dummy_send.hml")
+
+    payload = :ok
 
     io =
       capture_io(fn ->
-        Dummy.Server.spawn_send(:ok)
+        Dummy.Server.spawn_send(self(), payload)
         :timer.sleep(100)
       end)
 
     assert String.contains?(String.downcase(io), "instrumenting")
+    assert_receive ^payload
     assert String.contains?(String.downcase(io), "reached verdict 'end'")
   end
 
-  # @tag :skip
-  test "Monitoring send function: no verdict for matched ff pattern" do
+  @tag :skip
+  test "Monitoring send function: 'no' verdict for matched ff pattern" do
     load_monitor("dummy_send.hml")
+    payload = :no
 
     io =
       capture_io(fn ->
-        Dummy.Server.spawn_send(:no)
+        Dummy.Server.spawn_send(self(), payload)
+        :timer.sleep(100)
+      end)
+
+    assert String.contains?(String.downcase(io), "instrumenting")
+    assert_receive ^payload
+    assert String.contains?(String.downcase(io), "reached verdict 'no'")
+  end
+
+  # @tag :skip
+  test "Monitoring receive clause: 'end' verdict for unaccounted for pattern" do
+    load_monitor("dummy_recv.hml")
+
+    payload = {:add}
+
+    # io =
+    # capture_io(fn ->
+    Dummy.Server.spawn_recv(payload)
+    # Dummy.Server.spawn_recv(payload)
+    :timer.sleep(100)
+    # end)
+
+    # assert String.contains?(String.downcase(io), "instrumenting")
+    # assert String.contains?(String.downcase(io), "reached verdict 'end'")
+  end
+
+  @tag :skip
+  test "Monitoring receive clause: 'no' verdict for matched ff pattern" do
+    load_monitor("dummy_recv.hml")
+    payload = :no
+
+    io =
+      capture_io(fn ->
+        Dummy.Server.spawn_recv()
         :timer.sleep(100)
       end)
 
@@ -95,18 +136,21 @@ defmodule DummyTargetTest do
     assert String.contains?(String.downcase(io), "reached verdict 'no'")
   end
 
-  # test "monitor unfolds on valid operation" do
-  #   monitor_output =
-  #     capture_io(fn ->
-  #       send(self(), Dummy.Client.rpc(Dummy.Server.start(0), {:add, 1, 2}))
+  @tag :skip
+  test "monitor unfolds on valid operation" do
+    load_monitor("dummy_recurse.hml")
 
-  #       :timer.sleep(100)
-  #     end)
+    capture_io(fn ->
+      dest = Dummy.Server.spawn_recurse(0)
+      send(dest, {self(), {:add, 1, 2}})
 
-  #   assert_receive {:ok, 3}
+      :timer.sleep(100)
+    end)
 
-  #   assert String.contains?(String.downcase(monitor_output), "unfolding")
-  # end
+    assert_receive {:ok, 3}
+
+    # assert String.contains?(String.downcase(monitor_output), "unfolding")
+  end
 
   # test "monitor reaches \"no\" verdict when result invalidates {:add, a, b} -> {:ok, a + b} rule" do
   #   monitor_output =

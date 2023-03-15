@@ -1,10 +1,10 @@
 defmodule Demo.CalcServer do
-  @spec start(n :: integer()) :: pid()
+  # @spec start(n :: integer()) :: pid()
   def start(n) do
-    spawn(__MODULE__, :loop, [n])
+    b = spawn(__MODULE__, :loop, [n])
   end
 
-  @spec loop(tot :: integer()) :: no_return()
+  # @spec loop(tot :: integer()) :: no_return()
   def loop(tot) do
     receive do
       {clt, {:add, a, b}} ->
