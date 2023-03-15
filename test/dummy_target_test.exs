@@ -23,7 +23,9 @@ defmodule DummyTargetTest do
 
   setup_all do
     Weaver.weave("#{@src_path}/dummy_target.ex")
-    Weaver.weave("#{@src_path}/dummy_target.ex", "./test/resources", true)
+    # Weaver.weave("#{@src_path}/dummy_target.ex", "./test/resources", true)
+
+    on_exit(fn -> File.rm!(@mon) end)
 
     {:ok, %{}}
   end
@@ -108,46 +110,50 @@ defmodule DummyTargetTest do
   test "Monitoring receive clause: 'end' verdict for unaccounted for pattern" do
     load_monitor("dummy_recv.hml")
 
-    payload = {:add}
-
-    # io =
-    # capture_io(fn ->
-    Dummy.Server.spawn_recv(payload)
-    # Dummy.Server.spawn_recv(payload)
-    :timer.sleep(100)
-    # end)
-
-    # assert String.contains?(String.downcase(io), "instrumenting")
-    # assert String.contains?(String.downcase(io), "reached verdict 'end'")
-  end
-
-  @tag :skip
-  test "Monitoring receive clause: 'no' verdict for matched ff pattern" do
-    load_monitor("dummy_recv.hml")
-    payload = :no
+    payload = {:ok}
 
     io =
       capture_io(fn ->
-        Dummy.Server.spawn_recv()
+        dest = Dummy.Server.spawn_recv()
+        send(dest, {self(), payload})
         :timer.sleep(100)
       end)
 
     assert String.contains?(String.downcase(io), "instrumenting")
+    assert_receive ^payload
+    assert String.contains?(String.downcase(io), "reached verdict 'end'")
+  end
+
+  # @tag :skip
+  test "Monitoring receive clause: 'no' verdict for matched ff pattern" do
+    load_monitor("dummy_recv.hml")
+
+    payload = {:no}
+
+    io =
+      capture_io(fn ->
+        dest = Dummy.Server.spawn_recv()
+        send(dest, {self(), payload})
+        :timer.sleep(100)
+      end)
+
+    assert String.contains?(String.downcase(io), "instrumenting")
+    assert_receive ^payload
     assert String.contains?(String.downcase(io), "reached verdict 'no'")
   end
 
   @tag :skip
   test "monitor unfolds on valid operation" do
-    load_monitor("dummy_recurse.hml")
+    load_monitor("dummy_recv.hml")
 
-    capture_io(fn ->
-      dest = Dummy.Server.spawn_recurse(0)
-      send(dest, {self(), {:add, 1, 2}})
+    # capture_io(fn ->
+    dest = Dummy.Server.spawn_recv()
+    send(dest, {self(), {:add, 1, 1}})
 
-      :timer.sleep(100)
-    end)
+    # :timer.sleep(100)
+    # end)
 
-    assert_receive {:ok, 3}
+    # assert_receive {:ok, 3}
 
     # assert String.contains?(String.downcase(monitor_output), "unfolding")
   end

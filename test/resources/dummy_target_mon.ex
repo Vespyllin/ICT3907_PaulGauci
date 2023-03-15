@@ -80,7 +80,7 @@ defmodule(Dummy.Server) do
     end).()
   end
   def(spawn_recv(arg)) do
-    recv_dest = (fn ->
+    (fn ->
       mod = __MODULE__
       fun = :dummy_recv
       args = [:arg]
@@ -190,6 +190,7 @@ defmodule(Dummy.Server) do
             :analyzer.dispatch({:recv, self(), match})
           end
         end).()
+        IO.inspect("PASS")
         IO.inspect(pass)
     end
   end

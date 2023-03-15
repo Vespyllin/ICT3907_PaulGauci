@@ -15,32 +15,32 @@ defmodule Dummy.Server do
     spawn(__MODULE__, :dummy_send, [dest, arg])
   end
 
-  def spawn_recv(arg) do
-    recv_dest = spawn(__MODULE__, :dummy_recv, [:arg])
+  def spawn_recv() do
+    spawn(__MODULE__, :dummy_recv, [:arg])
     # send(recv_dest, arg)
   end
 
-  def spawn_recurse(arg) do
-    spawn(__MODULE__, :loop, [0])
+  def spawn_recurse() do
+    spawn(__MODULE__, :loop, [:arg])
   end
 
-  def loop(tot) do
-    IO.inspect("IN LOOP")
+  # def loop(tot) do
+  #   IO.inspect("IN LOOP")
 
-    receive do
-      {clt, {:add, a, b}} ->
-        IO.inspect("IN ADD")
-        send(clt, {:ok, a + b})
-        loop(tot + 1)
+  #   receive do
+  #     {clt, {:add, a, b}} ->
+  #       IO.inspect("IN ADD")
+  #       send(clt, {:ok, a + b})
+  #       loop(tot + 1)
 
-      # {clt, {:add, a, b}} ->
-      #   send(clt, {:ok, a + b})
-      #   loop(tot + 1)
+  #     # {clt, {:add, a, b}} ->
+  #     #   send(clt, {:ok, a + b})
+  #     #   loop(tot + 1)
 
-      {clt, :stp} ->
-        send(clt, {:bye, tot})
-    end
-  end
+  #     {clt, :stp} ->
+  #       send(clt, {:bye, tot})
+  #   end
+  # end
 
   def dummy_spawn() do
   end
@@ -56,11 +56,8 @@ defmodule Dummy.Server do
     IO.inspect("SPAWNED")
 
     receive do
-      {:add} ->
-        IO.inspect("RECEIVED")
-
-      pass ->
-        IO.inspect(pass)
+      {return_address, payload} ->
+        send(return_address, payload)
     end
   end
 
