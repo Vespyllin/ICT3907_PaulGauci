@@ -1,5 +1,5 @@
 defmodule DummyTargetTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
   import ExUnit.CaptureIO
   require Weaver
   require Dummy.Client
@@ -9,6 +9,12 @@ defmodule DummyTargetTest do
   @mon "./prop_add_rec.hml"
 
   def load_monitor(file_name) do
+    # Force reloading of the compile monitor BEAM
+    :code.purge(:prop_add_rec)
+
+    File.rm(@mon)
+    # File.rm("#{@bin_path}/prop_add_rec.beam")
+
     File.write!(@mon, File.read!("#{@src_path}/#{file_name}"))
 
     res =
@@ -19,24 +25,24 @@ defmodule DummyTargetTest do
     if(String.contains?(String.downcase(res), "error")) do
       raise("Bad monitor syntax in \"#{file_name}\"\n#{res}")
     end
+
+    :code.load_abs(to_charlist("#{@bin_path}/prop_add_rec"))
   end
 
   setup_all do
     Weaver.weave("#{@src_path}/dummy_target.ex")
-    # Weaver.weave("#{@src_path}/dummy_target.ex", "./test/resources", true)
+    Weaver.weave("#{@src_path}/dummy_target.ex", "./test/resources", true)
 
     on_exit(fn -> File.rm!(@mon) end)
-
-    {:ok, %{}}
   end
 
   @tag :skip
   test "Attaching a monitor to a function without arguments" do
-    load_monitor("dummy_spawn_noarg.hml")
+    load_monitor("dummy_noarg.hml")
 
     io =
       capture_io(fn ->
-        Dummy.Server.spawn_start()
+        Dummy.Server.spawn_noarg()
         :timer.sleep(100)
       end)
 
@@ -62,7 +68,7 @@ defmodule DummyTargetTest do
 
   @tag :skip
   test "Not attaching a monitor to a function not specified in the monitor specification" do
-    load_monitor("dummy_spawn_arg.hml")
+    load_monitor("dummy_arg.hml")
 
     io =
       capture_io(fn ->
@@ -106,7 +112,7 @@ defmodule DummyTargetTest do
     assert String.contains?(String.downcase(io), "reached verdict 'no'")
   end
 
-  # @tag :skip
+  @tag :skip
   test "Monitoring receive clause: 'end' verdict for unaccounted for pattern" do
     load_monitor("dummy_recv.hml")
 
@@ -124,7 +130,7 @@ defmodule DummyTargetTest do
     assert String.contains?(String.downcase(io), "reached verdict 'end'")
   end
 
-  # @tag :skip
+  @tag :skip
   test "Monitoring receive clause: 'no' verdict for matched ff pattern" do
     load_monitor("dummy_recv.hml")
 
@@ -142,13 +148,15 @@ defmodule DummyTargetTest do
     assert String.contains?(String.downcase(io), "reached verdict 'no'")
   end
 
-  @tag :skip
-  test "monitor unfolds on valid operation" do
-    load_monitor("dummy_recv.hml")
+  # @tag :skip
+  test "Monitor recurses on matched recurse pattern" do
+    # load_monitor("original.hml")
+    load_monitor("dummy_recurse.hml")
 
     # capture_io(fn ->
-    dest = Dummy.Server.spawn_recv()
-    send(dest, {self(), {:add, 1, 1}})
+    dest = Dummy.Server.dummy_recurse()
+    # dest = Demo.CalcServer.start(0)
+    # send(dest, {self(), {:add, 1, 1}})
 
     # :timer.sleep(100)
     # end)

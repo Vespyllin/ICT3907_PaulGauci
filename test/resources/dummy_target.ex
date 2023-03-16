@@ -20,27 +20,24 @@ defmodule Dummy.Server do
     # send(recv_dest, arg)
   end
 
-  def spawn_recurse() do
-    spawn(__MODULE__, :loop, [:arg])
+  def dummy_recurse() do
+    spawn(__MODULE__, :loop, [0])
   end
 
-  # def loop(tot) do
-  #   IO.inspect("IN LOOP")
+  def loop(tot) do
+    receive do
+      {clt, {:add, a, b}} ->
+        send(clt, {:ok, a + b})
+        loop(tot + 1)
 
-  #   receive do
-  #     {clt, {:add, a, b}} ->
-  #       IO.inspect("IN ADD")
-  #       send(clt, {:ok, a + b})
-  #       loop(tot + 1)
+      {clt, {:mul, a, b}} ->
+        send(clt, {:ok, a * b})
+        loop(tot + 1)
 
-  #     # {clt, {:add, a, b}} ->
-  #     #   send(clt, {:ok, a + b})
-  #     #   loop(tot + 1)
-
-  #     {clt, :stp} ->
-  #       send(clt, {:bye, tot})
-  #   end
-  # end
+      {clt, :stp} ->
+        send(clt, {:bye, tot})
+    end
+  end
 
   def dummy_spawn() do
   end

@@ -1,7 +1,7 @@
 defmodule Demo.CalcServer do
   # @spec start(n :: integer()) :: pid()
   def start(n) do
-    b = spawn(__MODULE__, :loop, [n])
+    spawn(__MODULE__, :loop, [n])
   end
 
   # @spec loop(tot :: integer()) :: no_return()

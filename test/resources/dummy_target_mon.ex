@@ -79,7 +79,7 @@ defmodule(Dummy.Server) do
       pid
     end).()
   end
-  def(spawn_recv(arg)) do
+  def(spawn_recv()) do
     (fn ->
       mod = __MODULE__
       fun = :dummy_recv
@@ -99,7 +99,7 @@ defmodule(Dummy.Server) do
       pid
     end).()
   end
-  def(spawn_recurse(arg)) do
+  def(dummy_recurse()) do
     (fn ->
       mod = __MODULE__
       fun = :loop
@@ -120,7 +120,6 @@ defmodule(Dummy.Server) do
     end).()
   end
   def(loop(tot)) do
-    IO.inspect("IN LOOP")
     receive do
       {clt, {:add, a, b}} ->
         (fn ->
@@ -129,10 +128,25 @@ defmodule(Dummy.Server) do
             :analyzer.dispatch({:recv, self(), match})
           end
         end).()
-        IO.inspect("IN ADD")
         (fn ->
           pid = clt
           msg = {:ok, a + b}
+          send(pid, msg)
+          if(:analyzer.filter(msg)) do
+            :analyzer.dispatch({:send, self(), pid, msg})
+          end
+        end).()
+        loop(tot + 1)
+      {clt, {:mul, a, b}} ->
+        (fn ->
+          match = {clt, {:mul, a, b}}
+          if(:analyzer.filter(match)) do
+            :analyzer.dispatch({:recv, self(), match})
+          end
+        end).()
+        (fn ->
+          pid = clt
+          msg = {:ok, a * b}
           send(pid, msg)
           if(:analyzer.filter(msg)) do
             :analyzer.dispatch({:send, self(), pid, msg})
@@ -175,23 +189,21 @@ defmodule(Dummy.Server) do
   def(dummy_recv(_arg)) do
     IO.inspect("SPAWNED")
     receive do
-      {:add} ->
+      {return_address, payload} ->
         (fn ->
-          match = {:add}
+          match = {return_address, payload}
           if(:analyzer.filter(match)) do
             :analyzer.dispatch({:recv, self(), match})
           end
         end).()
-        IO.inspect("RECEIVED")
-      pass ->
         (fn ->
-          match = pass
-          if(:analyzer.filter(match)) do
-            :analyzer.dispatch({:recv, self(), match})
+          pid = return_address
+          msg = payload
+          send(pid, msg)
+          if(:analyzer.filter(msg)) do
+            :analyzer.dispatch({:send, self(), pid, msg})
           end
         end).()
-        IO.inspect("PASS")
-        IO.inspect(pass)
     end
   end
   def(skip(_arg)) do
