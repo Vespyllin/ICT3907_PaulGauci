@@ -102,7 +102,7 @@ defmodule(Dummy.Server) do
   def(dummy_recurse()) do
     (fn ->
       mod = __MODULE__
-      fun = :loop
+      fun = :dummy_loop
       args = [0]
       pid = case(:prop_add_rec.mfa_spec({mod, fun, args})) do
         :undefined ->
@@ -119,50 +119,66 @@ defmodule(Dummy.Server) do
       pid
     end).()
   end
-  def(loop(tot)) do
+  def(dummy_loop(tot)) do
     receive do
-      {clt, {:add, a, b}} ->
+      {clt, :loop} ->
         (fn ->
-          match = {clt, {:add, a, b}}
+          match = {clt, :loop}
           if(:analyzer.filter(match)) do
             :analyzer.dispatch({:recv, self(), match})
           end
         end).()
         (fn ->
           pid = clt
-          msg = {:ok, a + b}
+          msg = :loop
           send(pid, msg)
           if(:analyzer.filter(msg)) do
             :analyzer.dispatch({:send, self(), pid, msg})
           end
         end).()
-        loop(tot + 1)
-      {clt, {:mul, a, b}} ->
+        dummy_loop(tot + 1)
+      {clt, :out} ->
         (fn ->
-          match = {clt, {:mul, a, b}}
+          match = {clt, :out}
           if(:analyzer.filter(match)) do
             :analyzer.dispatch({:recv, self(), match})
           end
         end).()
         (fn ->
           pid = clt
-          msg = {:ok, a * b}
+          msg = :out
           send(pid, msg)
           if(:analyzer.filter(msg)) do
             :analyzer.dispatch({:send, self(), pid, msg})
           end
         end).()
-        loop(tot + 1)
-      {clt, :stp} ->
+        dummy_loop(tot + 1)
+      {clt, :fail} ->
         (fn ->
-          match = {clt, :stp}
+          match = {clt, :fail}
           if(:analyzer.filter(match)) do
             :analyzer.dispatch({:recv, self(), match})
           end
         end).()
         (fn ->
           pid = clt
-          msg = {:bye, tot}
+          msg = :fail
+          send(pid, msg)
+          if(:analyzer.filter(msg)) do
+            :analyzer.dispatch({:send, self(), pid, msg})
+          end
+        end).()
+        dummy_loop(tot + 1)
+      {clt, :stop} ->
+        (fn ->
+          match = {clt, :stop}
+          if(:analyzer.filter(match)) do
+            :analyzer.dispatch({:recv, self(), match})
+          end
+        end).()
+        (fn ->
+          pid = clt
+          msg = :stop
           send(pid, msg)
           if(:analyzer.filter(msg)) do
             :analyzer.dispatch({:send, self(), pid, msg})

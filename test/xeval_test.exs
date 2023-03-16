@@ -1,4 +1,4 @@
-defmodule DummyTargetTest do
+defmodule XEvalTest do
   use ExUnit.Case, async: false
   import ExUnit.CaptureIO
   require Weaver
@@ -148,34 +148,60 @@ defmodule DummyTargetTest do
     assert String.contains?(String.downcase(io), "reached verdict 'no'")
   end
 
-  # @tag :skip
+  @tag :skip
   test "Monitor recurses on matched recurse pattern" do
-    # load_monitor("original.hml")
     load_monitor("dummy_recurse.hml")
 
-    # capture_io(fn ->
-    dest = Dummy.Server.dummy_recurse()
-    # dest = Demo.CalcServer.start(0)
-    # send(dest, {self(), {:add, 1, 1}})
+    payload = :loop
 
-    # :timer.sleep(100)
-    # end)
+    io =
+      capture_io(fn ->
+        dest = Dummy.Server.dummy_recurse()
+        send(dest, {self(), payload})
 
-    # assert_receive {:ok, 3}
+        :timer.sleep(100)
+      end)
 
-    # assert String.contains?(String.downcase(monitor_output), "unfolding")
+    assert_receive ^payload
+
+    assert String.contains?(String.downcase(io), "unfolding")
   end
 
-  # test "monitor reaches \"no\" verdict when result invalidates {:add, a, b} -> {:ok, a + b} rule" do
-  #   monitor_output =
-  #     capture_io(fn ->
-  #       send(self(), Dummy.Client.rpc(Dummy.Server.start(0), {:add, 0, 1}))
+  @tag :skip
+  test "Monitor does not recurse on matched ff pattern" do
+    load_monitor("dummy_recurse.hml")
 
-  #       :timer.sleep(100)
-  #     end)
+    payload = :fail
 
-  #   assert_receive {:ok, 2}
+    io =
+      capture_io(fn ->
+        dest = Dummy.Server.dummy_recurse()
+        send(dest, {self(), payload})
 
-  #   assert String.contains?(String.downcase(monitor_output), "reached verdict 'no'")
-  # end
+        :timer.sleep(100)
+      end)
+
+    assert_receive ^payload
+
+    assert String.contains?(String.downcase(io), "reached verdict 'no'")
+  end
+
+  # @tag :skip
+  test "Monitor does not on unaccounter for pattern" do
+    load_monitor("dummy_recurse.hml")
+
+    payload = :stop
+
+    io =
+      capture_io(fn ->
+        dest = Dummy.Server.dummy_recurse()
+        send(dest, {self(), payload})
+
+        :timer.sleep(100)
+      end)
+
+    assert_receive ^payload
+
+    assert String.contains?(String.downcase(io), "reached verdict 'end'")
+  end
 end
