@@ -1,7 +1,8 @@
 defmodule RestApi.Router do
   use Plug.Router
 
-  plug(Plug.Logger)
+  @a Benchmark.Calcserver.thing()
+  # plug(Plug.Logger)
 
   plug(:match)
 
@@ -14,6 +15,8 @@ defmodule RestApi.Router do
   plug(:dispatch)
 
   get "/" do
+    # IO.inspect(@a)
+    send(@a, {:msg, "contents"})
     send_resp(conn, 200, "OK")
   end
 

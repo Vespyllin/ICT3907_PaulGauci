@@ -1,14 +1,35 @@
-# Code.require_file("benchmark.ex")
-# Code.require_file("benchmark_mon.ex")
-# Code.require_file("./benchmark/application.ex")
-# Code.require_file("./benchmark/router.ex")
+IO.inspect(:erlang.memory(:total) / 1024 / 1025)
 
-# Weaver.weave("./benchmark.ex", "./", true)
-# Benchmark.run_benchmark(50000, 10000)
-# Monitor.Benchmark.run_benchmark(50000, 10000)
+{:ok, pid} = RestApi.Application.start(nil, nil)
+IO.inspect(pid)
+ref = Process.monitor(pid)
 
-# Benchmark.run_benchmark(500_000, 1000)
-# Monitor.Benchmark.run_benchmark(500_000, 1000)
+resmon = fn ->
+  loop = fn self, sample ->
+    :timer.sleep(250)
 
-# Benchmark.run_benchmark(5000, 100_000)
-# Monitor.Benchmark.run_benchmark(5000, 100_000)
+    if sample == nil do
+      self.(self, :scheduler.sample())
+    else
+      (:erlang.memory(:total) / 1024 / 1024)
+      |> Float.round(2)
+      |> IO.inspect()
+
+      # IO.inspect(:scheduler.utilization(sample))
+      self.(self, nil)
+    end
+  end
+
+  loop.(loop, nil)
+end
+
+resmon.()
+
+receive do
+  {:DOWN, ^ref, :process, ^pid, :normal} ->
+    IO.puts("Normal exit from #{inspect(pid)}")
+
+  {:DOWN, ^ref, :process, ^pid, msg} ->
+    IO.puts("Received :DOWN from #{inspect(pid)}")
+    IO.inspect(msg)
+end
