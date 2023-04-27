@@ -1,0 +1,1 @@
+echo "TMP.init()" | iex --erl '+P 134217727' -S mix
