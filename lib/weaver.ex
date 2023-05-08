@@ -14,7 +14,7 @@ defmodule Elixir.Weaver do
           dest_file_path = dest_path <> "/" <> file_name <> "_mon.ex"
           File.write!(dest_file_path, Macro.to_string(monitored_ast))
 
-          IO.puts("Wrote monitored file source code to \"#{dest_file_path}\".")
+          IO.puts("Monitored file source code written to \"#{dest_file_path}\".")
 
         dest_path && !source_code ->
           [{mod_name, binary}] = Code.compile_quoted(monitored_ast)
@@ -25,12 +25,14 @@ defmodule Elixir.Weaver do
           File.write!(dest_file_path, binary)
 
           IO.puts(
-            "Compiled monitored file into the environment as \"#{mod_name}\" and wrote it to \"#{dest_file_path}\"."
+            "Monitored file compiled and loaded into the environment as \"#{mod_name}\"." <>
+              "\n" <>
+              "Monitored file BEAM written to \"#{dest_file_path}\"."
           )
 
         true ->
           [{mod_name, _binary}] = Code.compile_quoted(monitored_ast)
-          IO.puts("Compiled monitored file into the environment as \"#{mod_name}\".")
+          IO.puts("Monitored file compiled and loaded into the environment as \"#{mod_name}\".")
       end
     rescue
       e in File.Error ->
@@ -43,6 +45,9 @@ defmodule Elixir.Weaver do
         end
 
       e in SyntaxError ->
+        exit("Source file contains invalid syntax.\n#{e.description}")
+
+      e in TokenMissingError ->
         exit("Source file contains invalid syntax.\n#{e.description}")
 
       reason ->

@@ -1,9 +1,0 @@
-with
-  'Elixir.Dummy.Server':dummy_send(_a, _b)
-monitor
-  and(
-    [_ <- _, 'Elixir.Dummy.Server':dummy_send(_a, _b)] 
-      and(
-        [_:_ ! no]ff
-      )
-  ).

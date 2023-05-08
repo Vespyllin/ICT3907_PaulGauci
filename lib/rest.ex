@@ -5,18 +5,13 @@ defmodule RestAPI do
 
   plug(:match)
 
-  plug(Plug.Parsers,
-    parsers: [:json],
-    pass: ["application/json"],
-    json_decoder: Jason
-  )
-
   plug(:dispatch)
 
-  post "/" do
-    # jsonthing = conn.body_params
-
-    send(CalcSpawner.init(), {self(), {:add, 1, 2}})
+  get "/" do
+    send(
+      CalcSpawner.init(),
+      {self(), {:add, :rand.uniform(100), :rand.uniform(100)}}
+    )
 
     receive do
       {:ok, val} ->

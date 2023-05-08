@@ -12,7 +12,6 @@ defmodule MySupervisor do
 
     children = [
       {Plug.Cowboy, scheme: :http, plug: RestAPI, options: [port: port]}
-      # {MyCalculator, []}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
