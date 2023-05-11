@@ -1,0 +1,11 @@
+with
+  'Elixir.Dummy.Server':dummy_loop(_)
+monitor
+  and([_ <- _, 'Elixir.Dummy.Server':dummy_loop(_)]
+    max(X.
+      and(
+        [_ ? {_, loop}]X,
+        [_ ? {_, fail}]ff
+      )
+    )
+  ).

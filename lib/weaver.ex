@@ -4,35 +4,33 @@ defmodule Elixir.Weaver do
       unless !dest_path || File.dir?(dest_path),
         do: raise("2nd argument must be an existing directory.")
 
+      unless String.ends_with?(source_file, ".ex"),
+        do: raise("Source must be a .ex file.")
+
       file_name = Path.basename(source_file, ".ex")
       read_res = File.read!(source_file)
 
       monitored_ast = unwrap_ast(Code.string_to_quoted!(read_res))
 
-      cond do
-        dest_path && source_code ->
+      if dest_path do
+        if source_code do
           dest_file_path = dest_path <> "/" <> file_name <> "_mon.ex"
+
           File.write!(dest_file_path, Macro.to_string(monitored_ast))
 
-          IO.puts("Monitored file source code written to \"#{dest_file_path}\".")
-
-        dest_path && !source_code ->
+          IO.puts("Monitored source code written to \"#{dest_file_path}\".")
+        else
           [{mod_name, binary}] = Code.compile_quoted(monitored_ast)
-
           dest_file_path = "#{dest_path}/#{mod_name}.beam"
 
-          IO.inspect(dest_file_path)
           File.write!(dest_file_path, binary)
 
-          IO.puts(
-            "Monitored file compiled and loaded into the environment as \"#{mod_name}\"." <>
-              "\n" <>
-              "Monitored file BEAM written to \"#{dest_file_path}\"."
-          )
-
-        true ->
-          [{mod_name, _binary}] = Code.compile_quoted(monitored_ast)
           IO.puts("Monitored file compiled and loaded into the environment as \"#{mod_name}\".")
+          IO.puts("Monitored BEAM written to \"#{dest_file_path}\".")
+        end
+      else
+        [{mod_name, _binary}] = Code.compile_quoted(monitored_ast)
+        IO.puts("Monitored file compiled and loaded into the environment as \"#{mod_name}\".")
       end
     rescue
       e in File.Error ->
