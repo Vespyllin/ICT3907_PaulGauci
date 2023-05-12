@@ -1,4 +1,5 @@
-BIN := _build/dev/lib/deploy/ebin
+# BIN := _build/dev/lib/deploy/ebin
+BIN := ./
 SRC := lib/
 
 define recursive

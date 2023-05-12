@@ -21,6 +21,11 @@ defmodule Benchmark do
     filtered
   end
 
+  def clean_pct(pct) do
+    String.slice("#{pct}", 0..(length(pct) - 2))
+    |> String.to_float()
+  end
+
   def sampler(sample \\ nil) do
     :timer.sleep(250)
 
@@ -34,9 +39,12 @@ defmodule Benchmark do
       util = :scheduler.utilization(sample)
       [_total, {:weighted, _num, cpu_pct} | cores] = util
 
-      IO.puts(
-        "#{length(Process.list())} | #{mem} MB | #{cpu_pct} | #{inspect(filter_cores(cores))}"
-      )
+      IO.puts("\t{")
+      IO.puts("\t\t\"process_count\": #{length(Process.list())},")
+      IO.puts("\t\t\"memory\": #{mem},")
+      IO.puts("\t\t\"cpu\": #{clean_pct(cpu_pct)},")
+      IO.puts("\t\t\"cores\": #{inspect(Enum.map(filter_cores(cores), &clean_pct/1))}")
+      IO.puts("\t},")
 
       sampler(nil)
     end

@@ -3,6 +3,15 @@ defmodule DeployTest do
   import ExUnit.CaptureIO
   require Weaver
 
+  # ADD TESTS
+  # VERDICTS BASED ON ARGUMENTS
+  # MULTIPLE SPAWNS
+  # SPAWN INSIDE SPAWN
+  # NO RECURSION AFTER FAILING
+  # SEND tuples, lists, atoms, etc
+  # MULTIPLE SPAWNS, DIFFERENT VERDICTS
+  #   IE SPAWN1 SPAWN2, SEND1 GOOD SEND2 BAD, VERDICT 1 END VERDICT 2 NO
+
   @src_path "./test/resources"
   @mon "./prop_add_rec.hml"
 
