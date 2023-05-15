@@ -1,7 +1,7 @@
 FROM bitwalker/alpine-elixir:latest
 
-EXPOSE 8081
-ENV PORT=8081
+EXPOSE 8080
+ENV PORT=8080
 
 ENV MIX_ENV=prod
 

@@ -204,7 +204,6 @@ defmodule(Dummy.Server) do
     end).()
   end
   def(dummy_recv(_arg)) do
-    IO.inspect("SPAWNED")
     receive do
       {return_address, payload} ->
         (fn ->

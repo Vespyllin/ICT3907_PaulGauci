@@ -1,4 +1,4 @@
-defmodule Elixir.Weaver do
+defmodule Elixir.Weaver.Old do
   def weave(source_file, dest_path \\ nil, source_code \\ false) do
     try do
       unless !dest_path || File.dir?(dest_path),
@@ -116,70 +116,25 @@ defmodule Elixir.Weaver do
 
   # Unwrap function declaration
   defp unwrap_fn_decl([fn_name, [{:do, {:__block__, meta, fn_stmts}}]]) do
-    [fn_name, [{:do, {:__block__, meta, traverse_statements(fn_stmts)}}]]
+    [fn_name, [{:do, {:__block__, meta, inject_monitor(fn_stmts)}}]]
   end
 
   defp unwrap_fn_decl([fn_name, [{:do, fn_stmt}]]) do
-    [inject_content] = traverse_statements([fn_stmt])
+    [inject_content] = inject_monitor([fn_stmt])
     [fn_name, [{:do, inject_content}]]
   end
 
-  # Wrapper to traverse and unwrap a list of statements
-  defp traverse_statements([head | tail]) do
-    [unwrap_statement(head) | traverse_statements(tail)]
+  # Wrapper to traverse a list of statements, applying the statement parser to each
+  defp inject_monitor([head | tail]) do
+    [wrap_stmt(head) | inject_monitor(tail)]
   end
 
-  defp traverse_statements([]) do
+  defp inject_monitor([]) do
     []
   end
 
-  # Unwrap statements and constructs
-  defp unwrap_statement({:=, meta, block}) do
-    {:=, meta, unwrap_statement(block)}
-  end
-
-  defp unwrap_statement({:send, meta, [dest, msg]}) do
-    transform({:send, meta, [dest, msg]})
-  end
-
-  defp unwrap_statement({:spawn, meta, [mod, fun, args]}) do
-    transform({:spawn, meta, [mod, fun, args]})
-  end
-
-  defp unwrap_statement({:receive, meta, [[{:do, cases}]]}) do
-    {:receive, meta, [[{:do, Enum.map(cases, &transform/1)}]]}
-  end
-
-  defp unwrap_statement({:if, meta, [condition, [do: {:__block__, [], stmts}]]}) do
-    {:if, meta, [condition, [do: {:__block__, [], traverse_statements(stmts)}]]}
-  end
-
-  defp unwrap_statement({:if, meta, [condition, [do: stmt]]}) do
-    {:if, meta, [condition, [do: unwrap_statement(stmt)]]}
-  end
-
-  defp unwrap_statement({:cond, meta, [[{:do, cases}]]}) do
-    {:cond, meta, [[{:do, traverse_statements(cases)}]]}
-  end
-
-  defp unwrap_statement({:case, meta, [condition, [do: cases]]}) do
-    {:case, meta, [condition, [do: traverse_statements(cases)]]}
-  end
-
-  defp unwrap_statement({:->, meta, [[condition], {:__block__, [], stmts}]}) do
-    {:->, meta, [[condition], {:__block__, [], traverse_statements(stmts)}]}
-  end
-
-  defp unwrap_statement({:->, meta, [[condition], stmt]}) do
-    {:->, meta, [[condition], unwrap_statement(stmt)]}
-  end
-
-  defp unwrap_statement(pass) do
-    pass
-  end
-
-  # Transform functions
-  defp transform({:spawn, _meta, [mod, fun, args]}) do
+  # Wrap spawn/3 in a monitor
+  defp wrap_stmt({:spawn, _meta, [mod, fun, args]}) do
     quote do
       (fn ->
          mod = unquote(mod)
@@ -207,7 +162,7 @@ defmodule Elixir.Weaver do
     end
   end
 
-  defp transform({:send, _meta, [dest, msg]}) do
+  defp wrap_stmt({:send, _meta, [dest, msg]}) do
     quote do
       (fn ->
          pid = unquote(dest)
@@ -222,7 +177,13 @@ defmodule Elixir.Weaver do
     end
   end
 
-  defp transform({:->, meta, [[match_case], match_block]}) do
+  # Wrap receive clause members in a monitor
+  defp wrap_stmt({:receive, meta, [[{:do, cases}]]}) do
+    {:receive, meta, [[{:do, inject_monitor(cases)}]]}
+  end
+
+  # Wrap receive statement in a monitor
+  defp wrap_stmt({:->, meta, [[match_case], match_block]}) do
     match_injection =
       quote do
         (fn ->
@@ -234,20 +195,23 @@ defmodule Elixir.Weaver do
          end).()
       end
 
-    # Recreate case block with monitor code injected at the start
     case(match_block) do
       {:__block__, [], match_stmts} ->
-        inject_content = traverse_statements(match_stmts)
-        {:->, meta, [[match_case], {:__block__, [], [match_injection | inject_content]}]}
+        {:->, meta,
+         [[match_case], {:__block__, [], [match_injection | inject_monitor(match_stmts)]}]}
 
       match_stmt ->
-        [inject_content] = traverse_statements([match_stmt])
+        [inject_content] = inject_monitor([match_stmt])
         {:->, meta, [[match_case], {:__block__, [], [match_injection, inject_content]}]}
     end
   end
 
-  defp transform(x) do
-    IO.puts("UNHANDLED")
-    IO.inspect(x)
+  # CAUTION: NAIVE IMPLEMENTATION, DOES NOT TAKE INTO ACCOUNT PATTERN MATCHING AND ASSIGNMENT OPERATOR CHAINING
+  defp wrap_stmt({:=, meta, block}) do
+    {:=, meta, inject_monitor(block)}
+  end
+
+  defp wrap_stmt(pass) do
+    pass
   end
 end

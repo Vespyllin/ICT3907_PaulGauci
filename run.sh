@@ -2,4 +2,4 @@
 
 mix run compile.exs
 
-echo "Benchmark.init()" | iex --erl '+P 134217727' -S mix 
+echo -e "IO.puts('Hello')\nBenchmark.init()" | iex --erl '+P 134217727' -S mix 

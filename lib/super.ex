@@ -7,7 +7,7 @@ defmodule MySupervisor do
 
   @impl true
   def init(_) do
-    port = 8081
+    port = 8080
     IO.puts("Running on port #{inspect(port)}")
 
     children = [
