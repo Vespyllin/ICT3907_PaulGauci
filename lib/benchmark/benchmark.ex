@@ -37,13 +37,13 @@ defmodule Benchmark do
         |> :erlang.float_to_binary(decimals: 2)
 
       util = :scheduler.utilization(sample)
-      [_total, {:weighted, _num, cpu_pct} | cores] = util
+      [_total, {:weighted, _num, cpu_pct} | _cores] = util
 
       IO.puts("\t{")
       IO.puts("\t\t\"process_count\": #{length(Process.list())},")
       IO.puts("\t\t\"memory\": #{mem},")
       IO.puts("\t\t\"cpu\": #{clean_pct(cpu_pct)},")
-      IO.puts("\t\t\"cores\": #{inspect(Enum.map(filter_cores(cores), &clean_pct/1))}")
+      # IO.puts("\t\t\"cores\": #{inspect(Enum.map(filter_cores(cores), &clean_pct/1))}")
       IO.puts("\t},")
 
       sampler(nil)

@@ -223,6 +223,12 @@ defmodule Elixir.Weaver do
   end
 
   defp transform({:->, meta, [[match_case], match_block]}) do
+    match_case =
+      case match_case do
+        {:_, meta, extra} -> {:passmatch, meta, extra}
+        _ -> match_case
+      end
+
     match_injection =
       quote do
         (fn ->
@@ -247,7 +253,6 @@ defmodule Elixir.Weaver do
   end
 
   defp transform(x) do
-    IO.puts("UNHANDLED")
-    IO.inspect(x)
+    x
   end
 end

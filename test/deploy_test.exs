@@ -3,15 +3,6 @@ defmodule DeployTest do
   import ExUnit.CaptureIO
   require Weaver
 
-  # ADD TESTS
-  # VERDICTS BASED ON ARGUMENTS
-  # MULTIPLE SPAWNS
-  # SPAWN INSIDE SPAWN
-  # NO RECURSION AFTER FAILING
-  # SEND tuples, lists, atoms, etc
-  # MULTIPLE SPAWNS, DIFFERENT VERDICTS
-  #   IE SPAWN1 SPAWN2, SEND1 GOOD SEND2 BAD, VERDICT 1 END VERDICT 2 NO
-
   @src_path "./test/resources"
   @mon "./prop_add_rec.hml"
 
@@ -71,8 +62,18 @@ defmodule DeployTest do
     assert String.contains?(String.downcase(io), "instrumenting monitor")
   end
 
-  @tag :todo
-  test "Monitor verdicts based on conditions regarding argument" do
+  @tag :skip
+  test "Monitor spawn arguments: 'no' verdict based on argument" do
+    load_monitor("dummy_arg_verdict.hml")
+
+    io =
+      capture_io(fn ->
+        Dummy.Server.spawn_arg()
+        :timer.sleep(@sleep)
+      end)
+
+    assert String.contains?(String.downcase(io), "instrumenting monitor")
+    assert String.contains?(String.downcase(io), "reached verdict 'no'")
   end
 
   @tag :skip

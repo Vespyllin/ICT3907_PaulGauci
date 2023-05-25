@@ -1,0 +1,10 @@
+with
+  'Elixir.CalcSpawner':listener()
+monitor
+  and([_ <- _, 'Elixir.CalcSpawner':listener()]
+    and([_ ? {_, {add, A, B}}]
+      and(
+        [_:_ ! {ok, Res} when Res =/= A + B]ff
+    )
+  )
+).
